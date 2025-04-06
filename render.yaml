@@ -2,12 +2,12 @@ services:
   - type: web
     name: ecovillage-builder
     env: node
-    buildCommand: npm install && npm run build
-    startCommand: npm start
+    buildCommand: chmod +x build.sh && ./build.sh
+    startCommand: node dist/server/index.js
     envVars:
       - key: NODE_ENV
         value: production
-      - key: PORT 
+      - key: PORT
         value: 10000
     healthCheckPath: /
     autoDeploy: true

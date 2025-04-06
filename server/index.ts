@@ -71,20 +71,22 @@ app.use((req, res, next) => {
     throw err;
   });
 
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
-  if (app.get("env") === "development") {
-    await setupVite(app, server);
-  } else {
-    serveStatic(app);
-  }
-
-  // Serve index.html for client-side routing in production
+  // Setup static file serving and routing
   if (process.env.NODE_ENV === 'production') {
-    app.get('*', (req, res) => {
-      res.sendFile(path.join(__dirname, '../client/dist/index.html'));
+    // Serve static files from the dist directory
+    app.use(express.static(path.join(__dirname, '../client/dist')));
+    
+    // Handle all routes for client-side routing
+    app.get('/*', (req, res) => {
+      res.sendFile(path.join(__dirname, '../client/dist/index.html'), (err) => {
+        if (err) {
+          res.status(500).send('Error loading the application');
+        }
+      });
     });
+  } else {
+    // Development mode
+    await setupVite(app, server);
   }
 
   // ALWAYS serve the app on port 5000
