@@ -16,16 +16,31 @@ export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 export const db = drizzle({ client: pool, schema });
 
 // MongoDB Atlas connection
-const MONGODB_URI = process.env.MONGODB_URI || "mongodb+srv://mkbharvad8080:Mkb%408080@mk.jnchrec.mongodb.net/p2p_system?retryWrites=true&w=majority&ssl=true&tlsAllowInvalidCertificates=true";
+const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://mkbharvad8080:Mkb@8080@cluster0.a82h2.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0';
 
-export const mongoClient = new MongoClient(MONGODB_URI);
-export const mongodb = mongoClient.db("p2p_system");
+if (!MONGODB_URI) {
+  throw new Error('Please define the MONGODB_URI environment variable');
+}
 
-// Initialize MongoDB connection
-try {
-  mongoClient.connect()
-    .then(() => console.log("MongoDB Atlas connected successfully"))
-    .catch(err => console.error("MongoDB connection error:", err));
-} catch (error) {
-  console.error("Failed to initialize MongoDB connection:", error);
+let cachedClient: MongoClient | null = null;
+
+export async function connectToDatabase() {
+  if (cachedClient) {
+    return cachedClient;
+  }
+
+  try {
+    const client = await MongoClient.connect(MONGODB_URI);
+    cachedClient = client;
+    console.log('Connected successfully to MongoDB');
+    return client;
+  } catch (error) {
+    console.error('MongoDB connection error:', error);
+    throw error;
+  }
+}
+
+export async function getDatabase() {
+  const client = await connectToDatabase();
+  return client.db();
 }
